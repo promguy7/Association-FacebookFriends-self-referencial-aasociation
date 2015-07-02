@@ -1,28 +1,68 @@
-== README
+					NOTES :
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Rails 4.1.8 ruby 2.0.0
+Follow the Steps to Learn
 
-Things you may want to cover:
+Facebook Friends 
 
-* Ruby version
+  1.rails generate scaffold User name:string title:string address:text
+   2.  rails generate model Friendship user:references 
+  3.
 
-* System dependencies
+class User < ActiveRecord::Base
+    has_many :friendships
+    has_many :friends, through: :friendships
+end
 
-* Configuration
+class Friendship < ActiveRecord::Base
+  belongs_to :user
+  belongs_to :friend, class_name: 'User'
+end
 
-* Database creation
+QUERY:
+1. @user1=User.find_or_create_by(name: 'User1')
+2.@user2=User.find_or_create_by(name: 'User2')
+Adding User to friendships
+user2(id comes from listing) is being followed by user1(current_user)
+3.@user1.friendships.build(friend_id: @user2.id)
+4. @user1.friendships.build(friend_id: @user2.id).save
+    User 2 will be listed in friends of user 1 
+5.@user1.friends
+  User Load (1.0ms)  SELECT "users".* FROM "users" INNER JOIN "friendships" ON "users"."id" = "friendships"."friend_id" WHERE "
+endships"."user_id" = ?  [["user_id", 1]]
+=> #<ActiveRecord::Associations::CollectionProxy [#<User id: 2, name: "User2", title: nil, address: nil, created_at: "2015-07-0
+1:17:11", updated_at: "2015-07-01 11:17:11">]>
 
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+6. @user1.friendships
+  Friendship Load (1.0ms)  SELECT "friendships".* FROM "friendships" WHERE "friendships"."user_id" = ?  [["user_id", 1]]
+=> #<ActiveRecord::Associations::CollectionProxy [#<Friendship id: 1, user_id: 1, friend_id: 2, created_at: "2015-07-01 11:17:28",
+ updated_at: "2015-07-01 11:17:28">]>
+6.User.find(1).friendships[0].friend.name
+"User2"
 
 
-Please feel free to use a different markup language if you do not plan to run
-<tt>rake doc:app</tt>.
+
+This is to see my friends  NOW to se list who made me friends is a follows:
+
+class User < ActiveRecord::Base
+    has_many :friendships
+    has_many :friends, through: :friendships
+    
+    has_many :inverse_friendships, class_name: 'Friendship',:foreign_key => "friend_id"
+    has_many :inverse_friends, through: :inverse_friendships ,source: :user
+end
+
+
+QUERIES:
+
+1.User.find(2).inverse_friends
+  User Load (1.0ms)  SELECT "users".* FROM "users" INNER JOIN "friendships" ON "users"."id" = "friendships"."user_id" WHERE "frien
+dships"."friend_id" = ?  [["friend_id", 2]]
+
+2.User.find(2).friends
+  User Load (0.0ms)  SELECT "users".* FROM "users" INNER JOIN "friendships" ON "users"."id" = "friendships"."friend_id" WHERE "fri
+endships"."user_id" = ?  [["user_id", 2]]
+
+
+Full implementation
+ http://railscasts.com/episodes/163-self-referential-association    
